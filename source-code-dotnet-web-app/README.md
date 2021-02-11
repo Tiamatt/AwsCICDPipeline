@@ -2,7 +2,7 @@
 
 If you need an already existing web application, then you can get the source code from **cicd-dotnet-webapp** folder. It contains a .NET 5.0 web app for a demo.
 
-Here we are going to explain step by step how to create your own app within a minute from scratch!
+Here we are going to explain step by step how to create your own app from scratch within a minute!
 
 ### 1. Install .NET
 Download and install .NET 5.0 (or later) SDK from [here](https://dotnet.microsoft.com/download)
@@ -29,7 +29,7 @@ Open **Program.cs** file and add the following code into `CreateHostBuilder()` m
 ``` 
 webBuilder.UseKestrel(options => { options.Listen(IPAddress.Any, 80); });
 ```
-Your code should look like:
+Your code should look like this:
 ```
 public static IHostBuilder CreateHostBuilder(string[] args) =>
             Host.CreateDefaultBuilder(args)
@@ -43,16 +43,14 @@ Then navigate to `http://localhost`
 
 
 ## 5. Added some extra files:
-Copy the following files from **cicd-files-for-webapp** folder:
+Copy the following files from **cicd-files-for-webapp** folder and paste them into the root folder of your app:
 - buildspec.yml (for CodeBuild)
 - appspec.yml (for CodeDeploy)
 - codedeploy-scripts than includes 4 sh files (for CodeDeploy)
 - .gitignore (for CodeCommit, copied from [here](https://github.com/dotnet/core/blob/master/.gitignore))
-Paste these files into the root folder of your app
 
 
 ## 6. Push the source code to CodeCommit repo
-
 Add a new git local repository, stage, commit and push:
 ```
 cd cicd-dotnet-webapp
@@ -61,24 +59,28 @@ git add .
 git commit -m"First commit"
 git push -f {outputRepoCloneUrlHttp} master
 ```
-Note, replace ```outputRepoCloneUrlHttp``` with CodeCommit HTTP URL
+Note, replace ```outputRepoCloneUrlHttp``` with yout actual AWS CodeCommit HTTP URL
 
 
-# Notes:
-1. How can I run a dotnet application in the background using sudo on Linux?
-So if you run ```cd ../home/ec2-user/cicd-dotnet-webapp && sudo dotnet cicd-dotnet-webapp.dll``` in EC2 instance, then the code will run till you are SHHed to the instance. Once you close your EC2 intance connection, the app will be stoped. Use ```screen -d -m -S SERVER bash -c 'cd ../home/ec2-user/cicd-dotnet-webapp && sudo dotnet cicd-dotnet-webapp.dll'``` instead.
-Read:  
-https://stackoverflow.com/questions/49479635/how-can-i-run-a-dotnet-application-in-the-background-using-sudo-on-linux 
+# Useful articles and notes:
+**How can I run a dotnet application in the background using sudo on Linux?**
+So if you run 
+```
+cd ../home/ec2-user/cicd-dotnet-webapp && sudo dotnet cicd-dotnet-webapp.dll
+``` 
+in EC2 instance, then the code will run till you are SHHed to the instance. Once you close your EC2 intance connection, the app will be stoped. Use 
+```
+screen -d -m -S SERVER bash -c 'cd ../home/ec2-user/cicd-dotnet-webapp && sudo dotnet cicd-dotnet-webapp.dll'
+```
+instead.
+Find details [here](https://stackoverflow.com/questions/49479635/how-can-i-run-a-dotnet-application-in-the-background-using-sudo-on-linux)
 
-
-2. Issue - CodeBuild does NOT support .NET 5.0
-AWS Codebuild: Unknown runtime version named '5.0' of dotnet
+**Issue - CodeBuild does NOT support .NET 5.0**
+Error `AWS Codebuild: Unknown runtime version named '5.0' of dotnet`
 The latest supported version by AWS CodeBuild is dotnet 3.1
-Read:
-- AWS Codebuild: Unknown runtime version named '5.0' of dotnet
-https://stackoverflow.com/questions/65546757/aws-codebuild-unknown-runtime-version-named-5-0-of-dotnet
-- .NET 5 Release - runtime support
-https://github.com/aws/aws-codebuild-docker-images/issues/401 
+Read more:
+-- AWS Codebuild: Unknown runtime version named '5.0' of dotnet [source](https://stackoverflow.com/questions/65546757/aws-codebuild-unknown-runtime-version-named-5-0-of-dotnet) 
+--.NET 5 Release - runtime support [source](https://github.com/aws/aws-codebuild-docker-images/issues/401)
 
-# Useful Links
-- .NET docs: https://docs.microsoft.com/en-us/dotnet/core/tools/dotnet-new 
+**Dotnet documentation**
+-- .NET docs [source](https://docs.microsoft.com/en-us/dotnet/core/tools/dotnet-new)
