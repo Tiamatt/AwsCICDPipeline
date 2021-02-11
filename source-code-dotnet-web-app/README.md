@@ -69,7 +69,7 @@ Note, replace ```outputRepoCloneUrlHttp``` with yout actual AWS CodeCommit HTTP 
 
 
 # Useful articles and notes:
-**Fix - How can I run a dotnet application in the background using sudo on Linux?**
+:point_right: **Fix - How can I run a dotnet application in the background using sudo on Linux?**
 
 So if you run 
 ```
@@ -82,7 +82,7 @@ screen -d -m -S SERVER bash -c 'cd ../home/ec2-user/cicd-dotnet-webapp && sudo d
 
 Find details [here](https://stackoverflow.com/questions/49479635/how-can-i-run-a-dotnet-application-in-the-background-using-sudo-on-linux).
 
-**Issue - CodeBuild does NOT support .NET 5.0**
+:point_right: **Issue - CodeBuild does NOT support .NET 5.0**
 
 Error `AWS Codebuild: Unknown runtime version named '5.0' of dotnet`.
 
@@ -90,10 +90,10 @@ The latest supported version by AWS CodeBuild is dotnet 3.1
 
 Read more:
 
-:point_right: AWS Codebuild: Unknown runtime version named '5.0' of dotnet [source](https://stackoverflow.com/questions/65546757/aws-codebuild-unknown-runtime-version-named-5-0-of-dotnet) 
+:blue_book: AWS Codebuild: Unknown runtime version named '5.0' of dotnet [source](https://stackoverflow.com/questions/65546757/aws-codebuild-unknown-runtime-version-named-5-0-of-dotnet) 
 
-:point_right:.NET 5 Release - runtime support [source](https://github.com/aws/aws-codebuild-docker-images/issues/401)
+:blue_book: .NET 5 Release - runtime support [source](https://github.com/aws/aws-codebuild-docker-images/issues/401)
 
-**Dotnet documentation**
+:point_right: **Dotnet documentation**
 
-:point_right: .NET docs [source](https://docs.microsoft.com/en-us/dotnet/core/tools/dotnet-new)
+:blue_book: .NET docs [source](https://docs.microsoft.com/en-us/dotnet/core/tools/dotnet-new)
