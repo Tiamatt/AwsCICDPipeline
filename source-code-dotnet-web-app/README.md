@@ -68,7 +68,7 @@ git push -f {outputRepoCloneUrlHttp} master
 Note, replace ```outputRepoCloneUrlHttp``` with yout actual AWS CodeCommit HTTP URL
 
 
-# Useful articles and notes:
+## Useful articles and notes:
 :point_right: **Fix - How can I run a dotnet application in the background using sudo on Linux?**
 
 So if you run 
