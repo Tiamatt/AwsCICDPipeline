@@ -6,7 +6,6 @@ Description: >-
   - Create a new S3 bucket to store CodeBuild artifacts
   - Create a new CodeBuild project that gets the source code from AWS CodeCommit and drops the build artifacts into S3 bucket
   - Create a new role for CodeBuild
-  Note, this template is a ROOT template for '1-nested-stack-for-codecommit' NESTED template
 
 ## =================== PARAMETERS =================== ##
 Parameters:
