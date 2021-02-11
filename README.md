@@ -1,5 +1,5 @@
 # AWS CI/CD Pipeline
-This is a demo project that helps to build a simple CI/CD pipeline on AWS using IaC approach. For the purposes of this demo, I've created a simple .NET Core web application and host it using AWS CodeCommit repository, AWS CodeBuild CI service, and AWS CodeDeploy to deploy the application on the Amazon EC2 instance. AWS CodePipeline was used to build and deploy the code every time there is a code.
+This is a demo project that helps to build a simple CI/CD pipeline on AWS using IaC approach. For the purposes of this demo, I've created a simple .NET Core web application and host it using AWS CodeCommit repository, AWS CodeBuild CI service, and AWS CodeDeploy to deploy the application on the Amazon EC2 instance. AWS CodePipeline was used to build and deploy the code every time there is a code change.
 
 As I’m strongly against managing environments manually and take Infrastructure as Code for granted, AWS CloudFormation was used to automate the process. As a result, the entire CI/CD pipeline set can be deployed on any AWS account using CloudFormation templates only.
 
@@ -24,14 +24,21 @@ Instead of manually managing and configuring all of the AWS services that are ne
 
 **AWS CloudFormation** is be a great fit for this project as it is naturally integrated with CodePipeline and other AWS builder tools.
 
-To keep in simple, I've created five separate templates :
+To keep it simple, I've separated out these common components and create dedicated templates for them
+
+created five separate templates:
+
 :one: for CodeCommit named `1-nested-stack-for-codecommit`
+
 :two: for CodeBuild named `2-nested-stack-for-codebuild`
+
 :three: for two EC2 instances (DEV and PROD) named `3-nested-stack-for-ec2`
+
 :four: for CodeDeploy named `4-nested-stack-for-codedeploy`
+
 :five: for CodePipeline named `5-root-stack-for-codepipeline` 
 
-The stack for CodePipeline template is a **root** stack. The stacks for the rest four templates are **nested** stacks. In other words, CodePipeline stack is the root stack for all the other, nested, stacks in the hierarchy (CodeCommit, CodeBuild, EC2 instances and CodeDeploy). Here is a the diagram of root-nested stacks:
+The stack for CodePipeline template is a **root** stack. The stacks for the rest four templates are **nested** stacks. In other words, CodePipeline stack is the root stack for all the other, nested, stacks in the hierarchy: CodeCommit, CodeBuild, EC2 instances and CodeDeploy. Here is a the diagram of root-nested stacks:
 
 ![stack-structure](readme-images/stack-structure.png)
 
