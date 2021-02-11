@@ -1,0 +1,98 @@
+AWSTemplateFormatVersion: '2010-09-09'
+
+## =================== DESCRIPTION =================== ##
+Description: >-
+  AWS CloudFormation sample template
+  - Create a new CodeDeploy application
+  - Create a new CodeDeploy deployment group for DEV env
+  - Create a new CodeDeploy deployment group for PROD env
+  - Create a new role for CodeDeploy deployment groups
+
+## =================== PARAMETERS =================== ##
+Parameters:
+  paramTagForDevEc2Instance:
+    Description: Specify an existing tag value for all DEV instances of CI/CD project
+    Type: String
+    Default: cicd-dev-ec2-instance
+  paramTagForProdEc2Instance:
+    Description: Specify an existing tag value for all PROD instances of CI/CD project
+    Type: String
+    Default: cicd-prod-ec2-instance
+
+## =================== RESOURCES =================== ##
+Resources:
+
+  # Create a new CodeDeploy application
+  myCodeDeployApplication:
+    Type: AWS::CodeDeploy::Application
+    Properties: 
+      ApplicationName: cicd-codedeploy-application
+      ComputePlatform: Server # Allowed values: ECS | Lambda | Server
+
+  # Create a new CodeDeploy deployment group for DEV env
+  myCodeDeployDeploymentGroupForDev: 
+    Type: AWS::CodeDeploy::DeploymentGroup
+    Properties: 
+      DeploymentGroupName: cicd-codedeploy-group-for-dev
+      ApplicationName: !Ref myCodeDeployApplication
+      Ec2TagFilters: 
+        - Key: Name
+          Value: cicd-dev-ec2-instance  # get all EC2 instances with { Name: cicd-dev-ec2-instance } tag
+          Type: 'KEY_AND_VALUE'
+      ServiceRoleArn: !Sub arn:aws:iam::${AWS::AccountId}:role/${myCodeDeployRole}
+
+  # Create a new CodeDeploy deployment group for PROD env
+  myCodeDeployDeploymentGroupForProd: 
+    Type: AWS::CodeDeploy::DeploymentGroup
+    Properties: 
+      DeploymentGroupName: cicd-codedeploy-group-for-prod
+      ApplicationName: !Ref myCodeDeployApplication
+      Ec2TagFilters: 
+        - Key: Name
+          Value: cicd-prod-ec2-instance # get all EC2 instances with { Name: cicd-prod-ec2-instance } tag
+          Type: 'KEY_AND_VALUE'
+      ServiceRoleArn: !Sub arn:aws:iam::${AWS::AccountId}:role/${myCodeDeployRole}
+
+  # Create a new role for CodeDeploy deployment groups
+  myCodeDeployRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: cicd-codedeploy-role
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Action:
+              - 'sts:AssumeRole'
+            Effect: Allow
+            Principal:
+              Service:
+                - codedeploy.amazonaws.com
+      Path: /
+      Policies:
+        - PolicyName: cicd-codedeploy-policy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Action:
+                  - 'ec2:DescribeInstances'
+                  - 'ec2:DescribeInstanceStatus'
+                  - 'ec2:TerminateInstances'
+                  - 'tag:GetTags'
+                  - 'tag:GetResources'
+                  - 'sns:Publish'
+                  - 'cloudwatch:DescribeAlarms'
+                  - 'cloudwatch:PutMetricAlarm'
+                Effect: Allow
+                Resource: '*'
+
+## =================== OUTPUT =================== ##
+Outputs:
+  outputCodeDeployApplication:
+    Description: CodeDeploy application name
+    Value: !Ref myCodeDeployApplication
+  outputCodeDeployDeploymentGroupForDev:
+    Description: CodeDeploy deployment group name for DEV
+    Value: !Ref myCodeDeployDeploymentGroupForDev
+  outputCodeDeployDeploymentGroupForProd:
+    Description: CodeDeploy deployment group name for PROD
+    Value: !Ref myCodeDeployDeploymentGroupForProd
