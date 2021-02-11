@@ -1,0 +1,48 @@
+AWSTemplateFormatVersion: '2010-09-09'
+
+## =================== DESCRIPTION =================== ##
+Description: >-
+  AWS CloudFormation sample template
+  Create an empty repository in CodeCommit
+
+## =================== PARAMETERS =================== ##
+Parameters:
+  paramRepoName:
+    Description: A new repository name which must be unique across the calling AWS account (required)
+    Type: String
+    MinLength: 1
+    MaxLength: 100
+    AllowedPattern: '^[\w\.-]+$'
+    ConstraintDescription: Repository name is limited to 100 alphanumeric, underscore, dash, and dot
+    Default: cicd-pipeline-repo
+  paramRepoDescription:
+    Description: Describe a new repository
+    Type: String
+    MaxLength: 1000
+    AllowedPattern: '^[\w \.-]+$'
+    Default: This repository is for AWS CICD Pipeline project
+    ConstraintDescription: Repository desciption is limited to 1000 alphanumeric, underscore, dash, and dot
+
+## =================== RESOURCES =================== ##
+Resources:
+  # Create an empty repository in CodeCommit
+  myRepo:
+    Type: AWS::CodeCommit::Repository
+    Properties:
+      RepositoryName: !Ref paramRepoName
+      RepositoryDescription: !Ref paramRepoDescription
+
+## =================== OUTPUT =================== ##
+Outputs:
+  outputRepoName:
+    Description: Repository's name
+    Value: !GetAtt myRepo.Name
+  outputRepoArn:
+    Description: Repository's ARN
+    Value: !GetAtt myRepo.Arn
+  outputRepoCloneUrlHttp:
+    Description: Repository's URL to use for cloning the repository over HTTPS
+    Value: !GetAtt myRepo.CloneUrlHttp
+  outputRepoCloneUrlSsh:
+    Description: Repository's URL to use for cloning the repository over SSH
+    Value: !GetAtt myRepo.CloneUrlSsh
