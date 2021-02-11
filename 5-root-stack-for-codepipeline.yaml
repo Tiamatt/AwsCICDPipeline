@@ -1,0 +1,271 @@
+AWSTemplateFormatVersion: '2010-09-09'
+
+## =================== DESCRIPTION =================== ##
+Description: >-
+  AWS CloudFormation sample template
+  a) Create a new CodeBuild project but don't ZIP it
+  b) Create a new CodeDeploy DeploymentGroups for Dev env but don't specofy 'Deployment' attribute
+  c) Create a new CodeDeploy DeploymentGroups for Prod env but don't specofy 'Deployment' attribute
+  d) Create a new CodePipeline with the following stages:
+    1. StageOne-SourceCode
+    2. StageTwo-Build
+    3. StageThree-Deploy-to-Dev
+    4. StageFour-Approve-Deployment-To-Prod
+    5. StageThree-Deploy-to-Prod
+  e) Create a new role for CodePipeline
+  f) Create an SNS topic for deployment approval
+
+## =================== PARAMETERS =================== ##
+Parameters:
+  paramEmail:
+    Description: Your email for CodePipeline notifications
+    Type: String
+
+  # the following paramaters are copied from '1-nested-stack-for-codecommit' template
+  paramRepoName:
+    Description: A new repository name which must be unique across the calling AWS account (required)
+    Type: String
+    MinLength: 1
+    MaxLength: 100
+    AllowedPattern: '^[\w\.-]+$'
+    ConstraintDescription: Repository name is limited to 100 alphanumeric, underscore, dash, and dot
+    Default: cicd-pipeline-repo
+  paramRepoDescription:
+    Description: Describe a new repository
+    Type: String
+    MaxLength: 1000
+    AllowedPattern: '^[\w \.-]+$'
+    Default: This repository is for AWS CICD Pipeline project
+    ConstraintDescription: Repository desciption is limited to 1000 alphanumeric, underscore, dash, and dot
+  # the following paramaters are copied from '2-nested-stack-for-codebuild' template
+  paramAppName:
+    Type: String
+    Description: Specify your Linux application name
+    Default: cicd-dotnet-webapp
+  paramTagForDevEc2Instance:
+    Description: Specify a unique tag value for all DEV instances of CI/CD project
+    Type: String
+    Default: cicd-dev-ec2-instance
+  paramTagForProdEc2Instance:
+    Description: Specify a unique tag value for all PROD instances of CI/CD project
+    Type: String
+    Default: cicd-prod-ec2-instance  
+  # the following paramaters are copied from '3-nested-stack-for-ec2' template
+  paramEC2KeyPair:
+    Description: Specify an EC2 KeyPair to enable SSH access to the instance
+    Type: AWS::EC2::KeyPair::KeyName
+
+## =================== RESOURCES =================== ##
+Resources:
+
+  # Refer to '1-nested-stack-for-codecommit' template
+  myCodecommitNestedStack:
+    Type: AWS::CloudFormation::Stack
+    Properties: 
+      TemplateURL: 'https://cicd-bucket-for-nested-stacks.s3.amazonaws.com/1-nested-stack-for-codecommit.yaml'
+      Parameters:
+        paramRepoName: !Ref paramRepoName
+        paramRepoDescription: !Ref paramRepoDescription
+      TimeoutInMinutes: 5 # in minutes
+  # Refer to '2-nested-stack-for-codebuild' template
+  myCodebuildNestedStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: 'https://cicd-bucket-for-nested-stacks.s3.amazonaws.com/2-nested-stack-for-codebuild.yaml'
+      Parameters:
+        paramAppName: !Ref paramAppName
+        paramRepoName: !Ref paramRepoName
+      TimeoutInMinutes: 5 # in minutes 
+  # Refer to '3-nested-stack-for-ec2' template
+  myEc2InstanceNestedStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: 'https://cicd-bucket-for-nested-stacks.s3.amazonaws.com/3-nested-stack-for-ec2.yaml'
+      Parameters:
+        paramEC2KeyPair: !Ref paramEC2KeyPair
+        paramTagForDevEc2Instance: !Ref paramTagForDevEc2Instance
+        paramTagForProdEc2Instance: !Ref paramTagForProdEc2Instance
+      TimeoutInMinutes: 5 # in minutes    
+  # Refer to '4-nested-stack-for-codedeploy' template
+  myCodedeployNestedStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: 'https://cicd-bucket-for-nested-stacks.s3.amazonaws.com/4-nested-stack-for-codedeploy.yaml'
+      Parameters:
+        paramTagForDevEc2Instance: !Ref paramTagForDevEc2Instance
+        paramTagForProdEc2Instance: !Ref paramTagForProdEc2Instance
+      TimeoutInMinutes: 5 # in minutes
+
+  # Create a new CodePipeline
+  myCodePipeline:
+    Type: AWS::CodePipeline::Pipeline
+    Properties:
+      Name:  cicd-codepipeline
+      RoleArn: !GetAtt myCodePipelineRole.Arn
+      # Provide S3 bucket name that contains codebuild artifacts
+      ArtifactStore:
+        Type: S3
+        Location: !GetAtt myCodebuildNestedStack.Outputs.outputS3BucketForCodeBuildArtifacts
+      Stages:
+        # Stage 
+        - Name: StageOne-SourceCode
+          Actions:
+            # Action 1/1 - Set CodeCommit
+            - Name: set-codecommit
+              RunOrder: 1
+              ActionTypeId:
+                Category: Source
+                Owner: AWS
+                Version: 1
+                Provider: CodeCommit
+              Configuration:
+                BranchName: master
+                RepositoryName: !GetAtt myCodecommitNestedStack.Outputs.outputRepoName
+              OutputArtifacts:
+                - Name: stageone-codecommit-output
+        # Stage 2
+        - Name: StageTwo-Build
+          Actions:
+            # Action 1/1 - Set CodeBuild
+            - Name: set-codebuild
+              RunOrder: 1
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: 1
+                Provider: CodeBuild
+              Configuration:
+                ProjectName: !GetAtt myCodebuildNestedStack.Outputs.outputCodeBuildProject
+              InputArtifacts:
+                - Name: stageone-codecommit-output
+              OutputArtifacts:
+                - Name: stagetwo-codebuild-output
+        # Stage 3
+        - Name: StageThree-Deploy-WebApp-to-Dev
+          Actions:
+            # Action 1/1 - Set CodeDeploy for Dev env
+            - Name: set-codedeploy-for-dev
+              RunOrder: 1
+              ActionTypeId:
+                Category: Deploy
+                Owner: AWS
+                Version: 1
+                Provider: CodeDeploy
+              Configuration:
+                ApplicationName: !GetAtt myCodedeployNestedStack.Outputs.outputCodeDeployApplication
+                DeploymentGroupName: !GetAtt myCodedeployNestedStack.Outputs.outputCodeDeployDeploymentGroupForDev
+              InputArtifacts:
+                - Name: stagetwo-codebuild-output
+        # Stage 4
+        - Name: StageFour-Approve-Deployment-To-Prod
+          Actions:
+            # Action 1/1 - Approve deployment to Prod env by sending SNS notification to user email
+            - Name: add-approval
+              RunOrder: 1
+              ActionTypeId:
+                Category: Approval
+                Owner: AWS
+                Version: 1
+                Provider: Manual
+              Configuration:
+                NotificationArn: !Ref myCodePipelineSNSTopic
+                CustomData: Greetings! Please, approve prod deployment
+        # Stage 5
+        - Name: StageFive-Deploy-WebApp-to-Prod
+          Actions:
+            # Action 1/1 - Set CodeDeploy for Prod env
+            - Name: set-codedeploy-for-prod
+              RunOrder: 1
+              ActionTypeId:
+                Category: Deploy
+                Owner: AWS
+                Version: 1
+                Provider: CodeDeploy
+              Configuration:
+                ApplicationName: !GetAtt myCodedeployNestedStack.Outputs.outputCodeDeployApplication
+                DeploymentGroupName: !GetAtt myCodedeployNestedStack.Outputs.outputCodeDeployDeploymentGroupForProd 
+              InputArtifacts:
+                - Name: stagetwo-codebuild-output
+  
+  # Create a new role for CodePipeline
+  myCodePipelineRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: cicd-codepipeline-role
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Action:
+              - 'sts:AssumeRole'
+            Effect: Allow
+            Principal:
+              Service:
+                - codepipeline.amazonaws.com
+      Path: /
+      Policies:
+        - PolicyName: cicd-codepipeline-policy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              # Permissions to access codebuild artifact object in S3 bucket
+              - Action:
+                  - 's3:DeleteObject'
+                  - 's3:GetObject'
+                  - 's3:GetObjectVersion'
+                  - 's3:ListBucket'
+                  - 's3:PutObject'
+                  - 's3:GetBucketPolicy'
+                Effect: Allow
+                Resource: 
+                  - !Sub arn:aws:s3:::${myCodebuildNestedStack.Outputs.outputS3BucketForCodeBuildArtifacts}
+                  - !Sub arn:aws:s3:::${myCodebuildNestedStack.Outputs.outputS3BucketForCodeBuildArtifacts}/*
+              # Permissions to publish to SNS 
+              - Action:
+                  - 'sns:Publish'
+                Effect: Allow
+                Resource: '*'
+              # Permissions to access target CodeCommit
+              - Action:
+                  - 'codecommit:ListBranches'
+                  - 'codecommit:ListRepositories'
+                  - 'codecommit:BatchGetRepositories'
+                  - 'codecommit:Get*'
+                  - 'codecommit:GitPull'
+                  - 'codecommit:UploadArchive'
+                Effect: Allow
+                Resource:
+                  - !Sub arn:aws:codecommit:${AWS::Region}:${AWS::AccountId}:${myCodecommitNestedStack.Outputs.outputRepoName}
+              # Permissions to access target CodeBuild
+              - Action:
+                  - 'codebuild:StartBuild'
+                  - 'codebuild:BatchGetBuilds'
+                Effect: Allow
+                Resource:
+                  - !Sub arn:aws:codebuild:${AWS::Region}:${AWS::AccountId}:project/${myCodebuildNestedStack.Outputs.outputCodeBuildProject}
+                  - !Sub arn:aws:codebuild:${AWS::Region}:${AWS::AccountId}:build/${myCodebuildNestedStack.Outputs.outputCodeBuildProject}:*
+              # Permissions to access CodeDeploy
+              - Action:
+                  - 'codedeploy:CreateDeployment'
+                  - 'codedeploy:GetApplicationRevision'
+                  - 'codedeploy:GetDeployment'
+                  - 'codedeploy:GetDeploymentConfig'
+                  - 'codedeploy:RegisterApplicationRevision'
+                Effect: Allow
+                Resource: '*'
+
+  # Create an SNS topic for deployment approval
+  myCodePipelineSNSTopic:
+    Type: 'AWS::SNS::Topic'
+    Properties:
+      Subscription:
+        - Endpoint: !Ref paramEmail
+          Protocol: email
+
+## =================== OUTPUTS =================== ##
+Outputs:
+  outputDevAppURL:
+    Description: Staging Application Access URL
+    Value: !GetAtt myEc2InstanceNestedStack.Outputs.outputDevAppURL
+  outputProdAppURL:
+    Description: Prod Application Access URL
+    Value: !GetAtt myEc2InstanceNestedStack.Outputs.outputProdAppURL
