@@ -90,10 +90,10 @@ The latest supported version by AWS CodeBuild is dotnet 3.1
 
 Read more:
 
-:blue_book: AWS Codebuild: Unknown runtime version named '5.0' of dotnet [source](https://stackoverflow.com/questions/65546757/aws-codebuild-unknown-runtime-version-named-5-0-of-dotnet) 
+- AWS Codebuild: Unknown runtime version named '5.0' of dotnet [source](https://stackoverflow.com/questions/65546757/aws-codebuild-unknown-runtime-version-named-5-0-of-dotnet) 
 
-:blue_book: .NET 5 Release - runtime support [source](https://github.com/aws/aws-codebuild-docker-images/issues/401)
+- .NET 5 Release - runtime support [source](https://github.com/aws/aws-codebuild-docker-images/issues/401)
 
 :point_right: **Dotnet documentation**
 
-:blue_book: .NET docs [source](https://docs.microsoft.com/en-us/dotnet/core/tools/dotnet-new)
+- .NET docs [source](https://docs.microsoft.com/en-us/dotnet/core/tools/dotnet-new)
