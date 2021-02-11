@@ -1,0 +1,149 @@
+AWSTemplateFormatVersion: 2010-09-09
+ 
+## =================== DESCRIPTION =================== ##
+Description: >-
+  AWS CloudFormation sample template
+  - Create DEV instance on Linux 2 for .Net Core with preinstalled codedeploy-agent
+  - Create PROD instance on Linux 2 for .Net Core with preinstalled codedeploy-agent
+  - Create a new SG for both EC2 instances
+  - Create a new role for both EC2 instances
+  - Assing a role to InstanceProfile
+  
+# Useful AWS docs for codedeploy-agent installation:
+# - Verify the CodeDeploy agent for Amazon Linux or RHEL is running https://docs.aws.amazon.com/codedeploy/latest/userguide/codedeploy-agent-operations-verify.html
+# - Install the CodeDeploy agent for Amazon Linux or RHEL https://docs.aws.amazon.com/codedeploy/latest/userguide/codedeploy-agent-operations-install-linux.html
+# - How can I use launch configurations to automatically install the CodeDeploy agent on an Amazon EC2 instance running Amazon Linux or Ubuntu? https://aws.amazon.com/premiumsupport/knowledge-center/codedeploy-agent-launch-configuration/
+
+## =================== PARAMETERS =================== ##
+Parameters:
+  paramEC2KeyPair:
+    Description: Specify an EC2 KeyPair to enable SSH access to the instance
+    Type: AWS::EC2::KeyPair::KeyName
+  paramTagForDevEc2Instance:
+    Description: Specify a unique tag value for all DEV instances of CI/CD project
+    Type: String
+    Default: cicd-dev-ec2-instance
+  paramTagForProdEc2Instance:
+    Description: Specify a unique tag value for all PROD instances of CI/CD project
+    Type: String
+    Default: cicd-prod-ec2-instance
+
+## =================== RESOURCES =================== ##
+Resources:
+
+  # Create DEV instance on Linux 2 for .Net Core with preinstalled codedeploy-agent
+  myDevInstance:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: ami-05880939912ddc43d # Amazon Linux 2 with .Net Core, PowerShell, Mono, and MATE Desktop Environment - Free tier eligible
+      InstanceType: t2.micro # Free tier eligible
+      KeyName: !Ref paramEC2KeyPair
+      SecurityGroups:
+        - !Ref mySecurityGroup
+      IamInstanceProfile: !Ref myInstanceProfile
+      UserData:
+        # After stack is built, SSH and test instance by running the following cmd: 
+        # curl http://169.254.169.254/latest/user-data
+        # sudo service codedeploy-agent status
+        # if not working, use this: https://aws.amazon.com/premiumsupport/knowledge-center/codedeploy-agent-launch-configuration/ 
+        Fn::Base64: |  
+          #!/bin/bash
+          sudo yum -y update
+          sudo yum install -y ruby
+          sudo yum install -y wget
+          cd /home/ec2-user
+          wget https://aws-codedeploy-us-east-1.s3.amazonaws.com/latest/install
+          chmod +x ./install
+          sudo ./install auto
+          sudo service codedeploy-agent start
+      Tags:
+        - Key: Name
+          Value: !Ref paramTagForDevEc2Instance
+  
+  # Create PROD instance on Linux 2 for .Net Core with preinstalled codedeploy-agent
+  myProdInstance:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: ami-05880939912ddc43d # Amazon Linux 2 with .Net Core, PowerShell, Mono, and MATE Desktop Environment - Free tier eligible
+      InstanceType: t2.micro # Free tier eligible
+      KeyName: !Ref paramEC2KeyPair
+      SecurityGroups:
+        - !Ref mySecurityGroup
+      IamInstanceProfile: !Ref myInstanceProfile
+      UserData:
+        # After stack is built, SSH and test instance by running the following cmd: 
+        # curl http://169.254.169.254/latest/user-data
+        # sudo service codedeploy-agent status
+        # if not working, use this: https://aws.amazon.com/premiumsupport/knowledge-center/codedeploy-agent-launch-configuration/ 
+        Fn::Base64: |  
+          #!/bin/bash
+          sudo yum -y update
+          sudo yum install -y ruby
+          sudo yum install -y wget
+          cd /home/ec2-user
+          wget https://aws-codedeploy-us-east-1.s3.amazonaws.com/latest/install
+          chmod +x ./install
+          sudo ./install auto
+          sudo service codedeploy-agent start
+      Tags:
+        - Key: Name
+          Value: !Ref paramTagForProdEc2Instance
+
+  # Create a new SG for both EC2 instances
+  mySecurityGroup: # SG for SSH and HTTP
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: cicd-sg-for-ssh-and-http
+      GroupDescription: My SG with port 22 (SSH) and 80 (HTTP) inbound
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: '22'
+          ToPort: '22'
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: '80'
+          ToPort: '80'
+          CidrIp: 0.0.0.0/0
+
+  # Create a new role for both EC2 instances
+  myInstanceRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      RoleName: cicd-instance-profile-role
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - ec2.amazonaws.com
+            Action: 'sts:AssumeRole'
+      Path: /
+      Policies: # allow read-only access to all S3 buckets and objects
+        - PolicyName: myCICDInstanceProfilePolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Action:
+                  - 's3:Get*'
+                  - 's3:List*'
+                  - 'codedeploy:*'
+                Effect: Allow
+                Resource: '*'
+
+  # Assing a role to InstanceProfile
+  myInstanceProfile: # assing role to InstanceProfile
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Path: /
+      Roles:
+        - !Ref myInstanceRole
+
+## =================== OUTPUTS =================== ##
+Outputs:
+  outputDevAppURL:
+    Description: Staging Application Access URL
+    Value: !Sub 'http://${myDevInstance.PublicDnsName}'
+  outputProdAppURL:
+    Description: Prod Application Access URL
+    Value: !Sub 'http://${myProdInstance.PublicDnsName}'
