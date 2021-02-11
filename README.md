@@ -3,6 +3,8 @@ This is a demo project that helps to build a simple CI/CD pipeline on AWS using 
 
 As I’m strongly against managing environments manually and take Infrastructure as Code for granted, AWS CloudFormation was used to automate the process. As a result, the entire CI/CD pipeline set can be deployed on any AWS account using CloudFormation templates only.
 
+
+
 ## **Architecture**
 
 The high-level architecture for our project is illustrated in the diagram below:
@@ -18,15 +20,14 @@ The high-level architecture for our project is illustrated in the diagram below:
 :point_right: **AWS CodePipeline** as a continuous delivery service. This is the thing that brings all three services listed above together into our CI/CD pipeline.
 
 
+
 ## **CloudFormation structure**
 
 Instead of manually managing and configuring all of the AWS services that are needed for an application to run, build and deploy (with a click here, a click there), we are going to automate the process by using **Infrastructure as Code (IaC)**. It saves us a ton of time and money and of course, gives a great flexibility to quickly set up our complete infrastructure by running a script for every environment (from development to production):blue_heart:.
 
 **AWS CloudFormation** is be a great fit for this project as it is naturally integrated with CodePipeline and other AWS builder tools.
 
-To keep it simple, I've separated out these common components and create dedicated templates for them
-
-created five separate templates:
+To keep it simple, I've separated out some resources and created five dedicated AWS CloudFormation templates for them:
 
 :one: for CodeCommit named `1-nested-stack-for-codecommit`
 
@@ -44,17 +45,36 @@ The stack for CodePipeline template is a **root** stack. The stacks for the rest
 
 
 
+## **How to get started**
+
+#### :point_right: **Step 1**
+First, you need to create a new "cicd-bucket-for-nested-stacks" S3 bucket, drop all nested yaml templates there and make them public.
+
+#### :point_right: **Step 2**
+Go to CloudFormation console and create a root stack using "5-root-stack-for-codepipeline" template. All the other, nested, stacks will be created automatically.
+
+#### :point_right: **Step 3**
+Check your email and confirm SNS notifications....
+
+#### :point_right: **Step 4**
+Go to a newly created CodePipeline console. You should see the very first step is failed. It's because our CodeCommit repository doesn't have any source code yet. Follow the steps in `\source-code-dotnet-web-app\README.md` file to push the code to a new repository.
+
+#### :point_right: **Step 5**
+Go back to CodePipeline console. Sit Back, Relax, and Enjoy CI/CD proccess! 
+
+Your code should be build and pushed to EC2 instance for DEV env. Go to CloudFormation console, find the root stack, navigate to Outputs tab of the menu and get `Dev application access URL`. Open the URL in the browser! 
+
+#### :point_right: **Step 6**
+For PROD changes you need to approve the stage.
 
 
 
 
-# Step 1
-First, you need to create a new "cicd-bucket-for-nested-stacks" S3 bucket, drop a;; yaml templates there and make them public.
+## **Cleanup**
 
-# Step 2
-Go to CloudFormation and run "" template
 
-kali: Samira, add nested stacks diagram 
+## **Happy dance**
 
-# Step 3
-Create and push a new code
+Finally, don't forget to do your happy dance!
+
+![meme-happy-dance](readme-images/meme-happy-dance.png)

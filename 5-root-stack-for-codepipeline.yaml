@@ -268,8 +268,8 @@ Outputs:
     Description: AWS CodeCommit repository URL over SSH
     Value: !GetAtt myCodecommitNestedStack.Outputs.outputRepoCloneUrlSsh
   outputDevAppURL:
-    Description: Staging Application Access URL
+    Description: Dev application access URL
     Value: !GetAtt myEc2InstanceNestedStack.Outputs.outputDevAppURL
   outputProdAppURL:
-    Description: Prod Application Access URL
+    Description: Prod application access URL
     Value: !GetAtt myEc2InstanceNestedStack.Outputs.outputProdAppURL
