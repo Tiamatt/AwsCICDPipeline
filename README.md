@@ -79,12 +79,12 @@ Go to a newly created CodePipeline console. You should see the very first step i
 
 ![cicd-5](readme-images/cicd-5.png)
 
-Follow the steps in [source-code-dotnet-web-app\README](source-code-dotnet-web-app\README.md) file to push the code to a new repository. You can find the HTTP and SSH urls of AWS CodeCommit repository among CloudFormation root stack outputs - go to CloudFormation console, find the root stack, navigate to Outputs tab of the menu and copy the URL:
+Follow the steps in [source-code-dotnet-web-app\README](source-code-dotnet-web-app/README.md) file to push the code to a new repository. You can find the HTTP and SSH urls of AWS CodeCommit repository among CloudFormation root stack outputs - go to CloudFormation console, find the root stack, navigate to Outputs tab of the menu and copy the URL:
 
 ![cicd-6](readme-images/cicd-6.png)
 
 #### :point_right: **Step 5**
-Once you push the code to AWS CodeCommit repository, go back to CodePipeline console. Sit Back, Relax, and Enjoy CI/CD proccess! 
+Once you push the code to AWS CodeCommit repository, go back to CodePipeline console. Sit back, relax, and enjoy CI/CD automation proccess! 
 
 ![cicd-7](readme-images/cicd-7.png)
 
@@ -119,11 +119,13 @@ You can make some changes in the code, then push it to AWS CodeCommit repo and e
 
 ## **Cleanup**
 
-To clean up the code, 
+To clean up the code, first, you need to emptify `cicd-codebuild-artifacts-bucket` S3 bucket
 
-First thing first, you need to emptify `cicd-bucket-for-nested-stacks` S3 bucket
+![cicd-15](readme-images/cicd-15.png)
 
-Then....
+Then delete a root stack which is based on "5-root-stack-for-codepipeline" template. Deleting the root stack will remove the nested stacks and all associated resources.
+
+![cicd-16](readme-images/cicd-16.png)
 
 ## **Happy dance**
 
